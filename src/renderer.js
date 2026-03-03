@@ -1,7 +1,6 @@
 // ===============================================================================
 // CONSTANTS
 // ===============================================================================
-const AVATAR_COLORS = ['#4f3ff0','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#64748b'];
 const STORAGE_PREFIX = 'salesgrok_'; // Using your app name as prefix
 
 // ===============================================================================
@@ -126,42 +125,6 @@ function getInitial(name) {
   return (name || '?').trim().charAt(0).toUpperCase();
 }
 
-// ===============================================================================
-// SCREEN TRANSITIONS
-// ===============================================================================
-function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(screen => {
-    if (screen.id === screenId) {
-      screen.classList.remove('exit');
-      screen.classList.add('active');
-    } else {
-      screen.classList.remove('active');
-      screen.classList.add('exit');
-      setTimeout(() => screen.classList.remove('exit'), 400);
-    }
-  });
-}
-
-// ===============================================================================
-// AVATAR COLOUR SWATCHES
-// ===============================================================================
-function buildSwatches(containerId, getColor, setColor, onPick) {
-  const swatchContainer = $(containerId);
-  swatchContainer.innerHTML = '';
-  AVATAR_COLORS.forEach(color => {
-    const swatch = document.createElement('div');
-    swatch.className = 'swatch' + (getColor() === color ? ' active' : '');
-    swatch.style.background = color;
-    swatch.title = color;
-    swatch.addEventListener('click', () => {
-      setColor(color);
-      buildSwatches(containerId, getColor, setColor, onPick);
-      onPick(color);
-    });
-    swatchContainer.appendChild(swatch);
-  });
-}
-
 function applyAvatarStyle(element, color, imageData, initial) {
   element.style.background = imageData ? 'transparent' : color;
   const imageElement = element.querySelector('img');
@@ -197,7 +160,7 @@ async function bootApp() {
     if (currentMode === 'transform') {
       $('generateMode').style.display = 'none';
       $('transformMode').style.display = 'block';
-      $('generateBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Transform to My Style';
+      $('generateBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Transform to Selected Style';
     } else {
       $('generateMode').style.display = 'block';
       $('transformMode').style.display = 'none';
@@ -1137,7 +1100,7 @@ async function handleTransform() {
     
   } finally {
     $('generateBtn').disabled = false;
-    $('generateBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Transform to My Style';
+    $('generateBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Transform to Selected Style';
   }
 }
 
@@ -1252,7 +1215,7 @@ function buildFeatureRequestUrl() {
   App Version: 1.0.0
   User: ${user?.name || 'Unknown'}`);
   
-  return `mailto:featurerequest.scholarflux@gmail.com?subject=${subject}&body=${body}`;
+  return `mailto:sabasabamosa@gmail.com?subject=${subject}&body=${body}`;
 }
 
 // ===============================================================================
@@ -1288,5 +1251,4 @@ function buildFeatureRequestUrl() {
   // Always boot to main app
   console.log('[Init] Starting app');
   await bootApp();
-  showScreen('screenApp');
 })();
