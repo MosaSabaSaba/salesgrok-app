@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title> SalesGrok &mdash; Voice Transformer AI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+
+<body>
+
+  <!-- Toast -->
+  <div class="toast-pill" id="toast"><i class="fa-solid fa-check"></i><span id="toastMsg">Done!</span></div>
+
+  <!-- Delete confirm -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <h3><i class="fa-solid fa-triangle-exclamation me-2" style="color:#f59e0b;"></i>Delete Item?</h3>
+      <p>Are you sure you want to delete <strong id="confirmProfileName"></strong>? This can't be undone.</p>
+      <div class="confirm-actions">
+        <button class="btn-confirm-cancel" id="confirmCancel">Cancel</button>
+        <button class="btn-confirm-delete" id="confirmDelete"><i class="fa-solid fa-trash me-1"></i>Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings overlay + panel -->
+  <div class="settings-overlay" id="settingsOverlay"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+      <h3><i class="fa-solid fa-sliders me-2" style="color:var(--brand-light);"></i>Settings</h3>
+      <button class="settings-close" id="settingsClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-avatar-section">
+        <div class="settings-avatar-lg" id="settingsAvatarLg">
+          <span id="settingsAvatarInitial">?</span>
+          <img id="settingsAvatarImg" src="" style="display:none;" alt="" />
+          <div class="avatar-overlay"><i class="fa-solid fa-camera"></i></div>
+          <input type="file" id="settingsAvatarInput" accept="image/*" />
+        </div>
+        <div class="settings-color-label">Avatar colour</div>
+        <div class="color-swatches" id="settingsSwatches"></div>
+      </div>
+
+      <div>
+        <div class="settings-section-title">Profile</div>
+        <div class="settings-field">
+          <label><i class="fa-solid fa-user"></i> Display name</label>
+          <input type="text" class="settings-input" id="settingsName" placeholder="Your name" maxlength="32" />
+        </div>
+      </div>
+
+      <div>
+        <div class="settings-section-title">API Configuration</div>
+        <div class="settings-field">
+          <label><i class="fa-solid fa-key"></i> Deepseek API Key</label>
+          <div style="position:relative;">
+            <input type="password" class="settings-input" id="settingsApiKey" placeholder="sk-..." style="padding-right:38px;" />
+            <button class="toggle-key" id="settingsKeyToggle" style="right:10px;top:50%;transform:translateY(-50%);position:absolute;"><i class="fa-solid fa-eye" id="settingsKeyIcon"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:14px;background:var(--bg-main);border-radius:var(--radius-md);border:1.5px solid var(--brand-border);">
+        <div class="settings-section-title" style="margin-bottom:8px;">About</div>
+        <div style="font-size:12px;color:var(--text-muted);line-height:1.7;">
+          <div><i class="fa-solid fa-desktop me-2" style="color:var(--brand-light);width:14px;"></i>Desktop edition</div>
+          <div><i class="fa-solid fa-shield-halved me-2" style="color:var(--brand-light);width:14px;"></i>Local data only</div>
+          <div><i class="fa-solid fa-tag me-2" style="color:var(--brand-light);width:14px;"></i>Version 1.0.0</div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-footer">
+      <button class="btn-settings-save" id="settingsSave"><i class="fa-solid fa-floppy-disk"></i> Save changes</button>
+      <button class="btn-reset" id="settingsReset"><i class="fa-solid fa-rotate-left"></i> Reset app</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: MAIN APP -->
+  <div class="screen active" id="screenApp">
+    <div class="app-shell">
+      <div class="top-bar">
+        <div class="top-bar-title">
+          <div class="top-bar-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          Voice Transformer AI
+        </div>
+        <div class="top-bar-right">
+          <div class="user-chip" id="userChip">
+            <div class="user-avatar-sm" id="topAvatarSm">
+              <span id="topAvatarInitial">?</span>
+              <img id="topAvatarImg" src="" style="display:none;" alt="" />
+            </div>
+            <span class="user-name-sm" id="topUserName">User</span>
+            <i class="fa-solid fa-chevron-down user-chip-caret"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="app-body">
+
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+          <h2><i class="fa-solid fa-clock-rotate-left me-2" style="color:var(--brand-light);font-size:.85rem;"></i>History</h2>
+          <div class="search-wrap">
+            <i class="fa fa-magnifying-glass"></i>
+            <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search history…" />
+          </div>
+          <div class="history-list" id="historyList"></div>
+
+          <hr class="panel-divider" />
+          <div class="section-label"><i class="fa-solid fa-microscope" style="color:var(--brand-light);"></i>Analyse Document</div>
+
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" accept=".docx" />
+            <div class="upload-icon"><i class="fa-solid fa-file-word"></i></div>
+            <p><strong>Drop .docx here</strong><br>or click to browse</p>
+          </div>
+          <div class="file-selected" id="fileSelected">
+            <i class="fa-solid fa-file-word" style="color:#2563eb;font-size:14px;flex-shrink:0;"></i>
+            <span class="file-name" id="fileName"></span>
+            <button class="file-remove" id="fileRemove"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <button class="btn-analyse" id="analyseBtn" disabled>
+            <i class="fa-solid fa-wand-sparkles"></i> Analyse Style
+          </button>
+
+          <div class="fresh-analysis" id="freshAnalysis">
+            <div class="analysis-card">
+              <div class="analysis-card-header">
+                <div class="analysis-card-title"><i class="fa-solid fa-chart-bar" style="color:var(--brand-light);"></i>Analysis</div>
+                <span style="font-size:10px;color:var(--text-muted);">Unsaved</span>
+              </div>
+              <div class="trait-row"><span class="trait-label"><i class="fa-regular fa-face-smile me-1"></i>Tone</span><span class="trait-chip" id="traitTone">—</span></div>
+              <div class="trait-row"><span class="trait-label"><i class="fa-solid fa-book-open me-1"></i>Vocabulary</span><span class="trait-chip" id="traitVocab">—</span></div>
+              <div class="trait-row"><span class="trait-label"><i class="fa-solid fa-ruler me-1"></i>Sentences</span><span class="trait-chip" id="traitSentence">—</span></div>
+              <div class="trait-row"><span class="trait-label"><i class="fa-solid fa-pen-fancy me-1"></i>Voice</span><span class="trait-chip" id="traitVoice">—</span></div>
+              <div class="trait-row"><span class="trait-label"><i class="fa-solid fa-fire me-1"></i>Personality</span><span class="trait-chip" id="traitPersonality">—</span></div>
+            </div>
+            <div class="save-name-row">
+              <input type="text" class="save-name-input" id="profileNameInput" placeholder="Name this profile…" maxlength="32" />
+              <button class="btn-save-profile" id="saveProfileBtn"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+            </div>
+          </div>
+
+          <hr class="panel-divider" />
+          <div class="section-label">
+            <i class="fa-solid fa-layer-group" style="color:var(--brand-light);"></i>
+            Saved Profiles
+            <span id="profileCount" style="margin-left:auto;background:var(--brand-pale);color:var(--brand);font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:999px;">0</span>
+          </div>
+          <div class="saved-profiles-list" id="savedProfilesList"></div>
+
+          <hr class="panel-divider" />
+          <div class="apply-row" id="applyRow">
+            <label for="applyToggle"><i class="fa-solid fa-wand-sparkles" style="color:var(--brand);"></i>Apply style</label>
+            <label class="toggle-switch"><input type="checkbox" id="applyToggle" /><span class="toggle-track"></span></label>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="generator-panel">
+
+          <div>
+            <div class="field-label"><i class="fa-solid fa-key"></i> Deepseek API Key</div>
+            <div class="api-key-wrap">
+              <input type="password" class="form-control form-control-sm" id="apiKeyDisplay" readonly />
+              <button class="toggle-key" id="toggleKey"><i class="fa-solid fa-eye" id="toggleIcon"></i></button>
+            </div>
+          </div>
+
+          <div class="active-style-bar" id="activeStyleBar">
+            <i class="fa-solid fa-fingerprint" style="color:var(--brand-light);flex-shrink:0;"></i>
+            <span class="style-name" id="activeStyleName">—</span>
+            <button class="clear-style-btn" id="clearStyleBtn"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="loading-row" id="loadingRow">
+            <div class="spinner-ring"></div>
+            <span id="loadingText">Processing…</span>
+          </div>
+
+          <div class="results-area" id="resultsArea">
+            <div class="style-applied-note" id="styleAppliedNote" style="display:none;">
+              <i class="fa-solid fa-wand-sparkles"></i>
+              <span id="styleAppliedText">Style applied</span>
+            </div>
+            <div class="results-box-single" id="resultsBoxSingle">
+              <div class="results-meta-bar">
+                <span class="results-meta"><i class="fa-solid fa-list-check me-1"></i><span id="resultCount">0</span> items</span>
+                <button class="copy-btn" id="copyBtnSingle"><i class="fa-regular fa-copy me-1"></i>Copy</button>
+              </div>
+              <div class="result-items" id="resultItemsSingle"></div>
+            </div>
+            <div class="results-sidebyside" id="resultsSideBySide" style="display:none;">
+              <div class="result-col">
+                <div class="col-header"><span class="col-badge original"><i class="fa-solid fa-robot me-1"></i>Original</span><button class="copy-btn ms-auto" id="copyBtnOriginal"><i class="fa-regular fa-copy"></i></button></div>
+                <div class="result-items" id="resultItemsOriginal"></div>
+              </div>
+              <div class="result-col">
+                <div class="col-header"><span class="col-badge styled"><i class="fa-solid fa-fingerprint me-1"></i>Your Style</span><button class="copy-btn ms-auto" id="copyBtnStyled"><i class="fa-regular fa-copy"></i></button></div>
+                <div class="result-items" id="resultItemsStyled"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode Toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--brand-pale);border:1.5px solid var(--brand-border);border-radius:var(--radius-md);">
+            <label style="font-size:12px;font-weight:600;color:var(--text-dark);cursor:pointer;display:flex;align-items:center;gap:7px;margin:0;">
+              <i class="fa-solid fa-bolt" style="color:var(--brand-light);"></i>
+              <span>Generate New</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="modeToggle" />
+              <span class="toggle-track"></span>
+            </label>
+            <label style="font-size:12px;font-weight:600;color:var(--text-dark);cursor:pointer;display:flex;align-items:center;gap:7px;margin:0;">
+              <span>Transform Text</span>
+              <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--brand-light);"></i>
+            </label>
+          </div>
+
+          <!-- Generate Mode -->
+          <div id="generateMode">
+            <div>
+              <div class="field-label"><i class="fa-solid fa-pen-nib"></i> What to generate:</div>
+              <textarea class="prompt-textarea form-control" id="promptInput" rows="3" placeholder="e.g. 10 email subject lines for a product launch"></textarea>
+            </div>
+          </div>
+
+          <!-- Transform Mode -->
+          <div id="transformMode" style="display:none;">
+            <div>
+              <div class="field-label"><i class="fa-solid fa-paste"></i> Text to transform:</div>
+              <textarea class="prompt-textarea form-control" id="transformInput" rows="5" placeholder="Paste any text here - we'll rewrite it in your style while keeping the meaning."></textarea>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:-1px;padding:0 2px;line-height:1.5;">
+              <i class="fa-solid fa-lightbulb" style="color:var(--brand-light);margin-right:4px;"></i>
+              Perfect for emails, drafts, AI content, templates
+            </div>
+          </div>
+
+          <div class="d-flex flex-column gap-2">
+            <button class="btn-generate" id="generateBtn"><i class="fa-solid fa-bolt"></i> Generate Content</button>
+            <button class="btn-tip" id="featureRequestBtn"><i class="fa-solid fa-lightbulb" style="color:#fbbf24;"></i> Request a Feature</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
