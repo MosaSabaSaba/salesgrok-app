@@ -1,6 +1,7 @@
 // ===============================================================================
 // CONSTANTS
 // ===============================================================================
+const AVATAR_COLORS = ['#4f3ff0','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#64748b'];
 const STORAGE_PREFIX = 'salesgrok_'; // Using your app name as prefix
 
 // ===============================================================================
@@ -187,11 +188,6 @@ function openSettings() {
   $('settingsApiKey').value = user.apiKey || '';
   applyAvatarStyle($('settingsAvatarLg'), settingsAvatarColor, settingsAvatarImgData, getInitial(user.name));
   $('settingsAvatarInitial').textContent = settingsAvatarImgData ? '' : getInitial(user.name);
-  buildSwatches('settingsSwatches',
-    () => settingsAvatarColor,
-    color => { settingsAvatarColor = color; settingsAvatarImgData = null; },
-    color => { applyAvatarStyle($('settingsAvatarLg'), color, null, getInitial($('settingsName').value)); $('settingsAvatarInitial').textContent = getInitial($('settingsName').value); }
-  );
   $('settingsOverlay').classList.add('open');
   $('settingsPanel').classList.add('open');
 }
@@ -512,16 +508,25 @@ $('analyseBtn').addEventListener('click', async () => {
     
     console.log('[Analysis] Complete');
 
-    const truncate = (str, max = 50) => {
-      if (!str) return 'N/A';
-      return str.length > max ? str.substring(0, max) + '...' : str;
+    // Helper to truncate text for display
+    const truncateDisplay = (str, max = 10) => {
+      if (!str) return '—';
+      return str.length > max ? str.substring(0, max) + '…' : str;
     };
     
-    $('traitTone').textContent = truncate(freshProfile.tone);
-    $('traitVocab').textContent = truncate(freshProfile.vocabulary);
-    $('traitSentence').textContent = truncate(freshProfile.sentenceStyle);
-    $('traitVoice').textContent = truncate(freshProfile.voice);
-    $('traitPersonality').textContent = truncate(freshProfile.personality);
+    // Set truncated values for display
+    $('traitTone').textContent = truncateDisplay(freshProfile.tone);
+    $('traitVocab').textContent = truncateDisplay(freshProfile.vocabulary);
+    $('traitSentence').textContent = truncateDisplay(freshProfile.sentenceStyle);
+    $('traitVoice').textContent = truncateDisplay(freshProfile.voice);
+    $('traitPersonality').textContent = truncateDisplay(freshProfile.personality);
+    
+    // Add tooltips to show full values on hover
+    $('traitTone').title = freshProfile.tone || '';
+    $('traitVocab').title = freshProfile.vocabulary || '';
+    $('traitSentence').title = freshProfile.sentenceStyle || '';
+    $('traitVoice').title = freshProfile.voice || '';
+    $('traitPersonality').title = freshProfile.personality || '';
     
     $('profileNameInput').value = '';
     $('freshAnalysis').classList.add('visible');
@@ -562,10 +567,17 @@ $('saveProfileBtn').addEventListener('click', async () => {
     return;
   }
 
+  // Helper function to truncate strings to 10 characters
+  const truncateValue = (value) => {
+    if (!value || value === 'undefined') return '—';
+    return value.length > 10 ? value.substring(0, 10) + '…' : value;
+  };
+
   const profile = {
     id: uid(),
     name,
     date: todayLabel(),
+    // Store full values but also store truncated versions for display
     tone: freshProfile.tone,
     vocabulary: freshProfile.vocabulary,
     sentenceStyle: freshProfile.sentenceStyle,
@@ -577,7 +589,13 @@ $('saveProfileBtn').addEventListener('click', async () => {
     example: freshProfile.example,
     analyzedAt: freshProfile.analyzedAt,
     textLength: freshProfile.textLength,
-    wordCount: freshProfile.wordCount
+    wordCount: freshProfile.wordCount,
+    // Add truncated versions for display
+    toneShort: truncateValue(freshProfile.tone),
+    vocabularyShort: truncateValue(freshProfile.vocabulary),
+    sentenceStyleShort: truncateValue(freshProfile.sentenceStyle),
+    voiceShort: truncateValue(freshProfile.voice),
+    personalityShort: truncateValue(freshProfile.personality)
   };
 
   savedProfiles.push(profile);
@@ -889,7 +907,7 @@ $('modeToggle').addEventListener('change', async (e) => {
   if (currentMode === 'transform') {
     $('generateMode').style.display = 'none';
     $('transformMode').style.display = 'block';
-    $('generateBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Transform to My Style';
+    $('generateBtn').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Transform to Selected Style';
     console.log('[Mode] Switched to Transform');
   } else {
     $('generateMode').style.display = 'block';
